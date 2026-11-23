@@ -1,11 +1,6 @@
 import { createConnection, type Connection } from 'mongoose';
 import { ANALYTICS_COLLECTIONS, ensureIndexes, type IndexDb } from '../src/db/indexes.js';
 
-/**
- * Applies the real index definitions to a live Mongo and reads them back.
- * Skips cleanly when the local replica set is not running so a dev machine
- * without infra still has a green unit suite.
- */
 describe('analytics Mongo schema (e2e)', () => {
   let connection: Connection | null = null;
 

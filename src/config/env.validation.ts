@@ -24,7 +24,6 @@ export const envValidationSchema = Joi.object({
         'MONGODB_URI must start with mongodb:// or mongodb+srv:// and include a database name',
     }),
   KAFKA_BROKERS: Joi.string().default('localhost:9092'),
-  // Ingest rate limit. Defaults match the documented 60 events / 60s window.
   TRACK_RATE_LIMIT_MAX: Joi.number().integer().min(1).default(60),
   TRACK_RATE_LIMIT_WINDOW_MS: Joi.number().integer().min(1000).default(60_000),
   // Set by the e2e config so the relay never publishes during a test.
