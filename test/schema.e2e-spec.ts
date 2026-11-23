@@ -11,10 +11,12 @@ describe('analytics Mongo schema (e2e)', () => {
 
   beforeAll(async () => {
     try {
-      connection = await createConnection(
+      connection = createConnection();
+      await connection.openUri(
         process.env.MONGODB_URI ??
           'mongodb://localhost:27018/ecom_analytics_test?replicaSet=rs0&directConnection=true',
-      ).asPromise();
+        { serverSelectionTimeoutMS: 2000 },
+      );
       if (!connection.db) throw new Error('no db');
       await ensureIndexes(connection.db as unknown as IndexDb);
     } catch {

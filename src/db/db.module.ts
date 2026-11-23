@@ -2,11 +2,13 @@ import { Global, Module } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
 import { IndexesService } from './indexes.service.js';
+import { MongoConnectionBinder } from './mongo-connection.js';
+import { MongoTransactions } from './mongo-tx.js';
 
 /**
- * The single Mongo connection for the service. Analytics is append-only and
- * does not use Mongo transactions yet (anl-003 will), but the local URI points
- * at the `rs0` replica set so that transaction support needs no later change.
+ * The single Mongo connection for the service. Analytics is append-only; the
+ * local URI points at the `rs0` replica set so transactions (outbox writes and,
+ * later, fact + dedupe) work without a URI change.
  */
 @Global()
 @Module({
@@ -20,12 +22,11 @@ import { IndexesService } from './indexes.service.js';
         connectTimeoutMS: 5000,
         socketTimeoutMS: 10000,
         maxPoolSize: 10,
-        // Boot must fail instead of silently running with no database.
         retryAttempts: 0,
       }),
     }),
   ],
-  providers: [IndexesService],
-  exports: [MongooseModule],
+  providers: [MongoConnectionBinder, MongoTransactions, IndexesService],
+  exports: [MongooseModule, MongoTransactions],
 })
 export class DbModule {}
