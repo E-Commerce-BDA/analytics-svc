@@ -11,7 +11,6 @@ import { OUTBOX_STORE } from '@ecom/messaging/nest/outbox';
 
 export interface PageViewWrite {
   topic: 'page.viewed';
-  /** Pseudonymous key — used as the Kafka key and the outbox aggregate id. */
   aggregateId: string;
   payload: PageViewedPayload;
   occurredAt?: Date;

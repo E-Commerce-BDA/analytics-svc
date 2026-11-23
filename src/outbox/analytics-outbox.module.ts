@@ -5,7 +5,6 @@ import { createMongoOutboxModule } from '@ecom/messaging/nest/outbox';
 import { mongoOutboxDb } from '../db/mongo-connection.js';
 import { AnalyticsOutbox } from './analytics-outbox.js';
 
-/** `analytics_outbox` is the Mongo twin of the Postgres outbox the other services use. */
 @Global()
 @Module({
   imports: [

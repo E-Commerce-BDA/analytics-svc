@@ -46,7 +46,6 @@ export const ANALYTICS_COLLECTIONS: readonly CollectionDefinition[] = [
   },
 ];
 
-/** Minimal shape of the driver `Db` used here — keeps this testable. */
 export interface IndexDb {
   collection(name: string): {
     createIndexes(specs: readonly IndexDefinition[]): Promise<unknown>;

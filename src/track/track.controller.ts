@@ -16,7 +16,6 @@ import { TrackService } from './track.service.js';
 import { TRACK_LIMITER } from './track.tokens.js';
 import type { SlidingWindowLimiter } from './rate-limit.js';
 
-/** The storefront's Next route is the only caller; the browser never sees Kafka. */
 @Controller('track')
 export class TrackController {
   constructor(

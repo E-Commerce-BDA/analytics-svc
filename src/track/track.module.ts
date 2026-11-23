@@ -5,7 +5,6 @@ import { TrackService } from './track.service.js';
 import { SlidingWindowLimiter } from './rate-limit.js';
 import { TRACK_LIMITER } from './track.tokens.js';
 
-/** The HTTP ingest boundary for storefront page-view beacons. */
 @Module({
   controllers: [TrackController],
   providers: [

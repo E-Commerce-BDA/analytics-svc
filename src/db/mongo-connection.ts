@@ -29,7 +29,6 @@ export function mongoConnection(): Connection {
   return current;
 }
 
-/** Structural view of the driver `Db` for the messaging outbox store. */
 export function mongoOutboxDb(): MongoOutboxDb {
   const db = mongoConnection().db;
   if (!db) {

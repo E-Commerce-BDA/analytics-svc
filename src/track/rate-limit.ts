@@ -54,7 +54,6 @@ export class SlidingWindowLimiter {
     return { allowed: true, retryAfterSeconds: 0 };
   }
 
-  /** Visible for unit tests: how many sessions currently hold timestamps. */
   get size(): number {
     return this.sessions.size;
   }

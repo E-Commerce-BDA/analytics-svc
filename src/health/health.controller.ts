@@ -1,7 +1,6 @@
 import { Controller, Get, Header } from '@nestjs/common';
 import { HealthService, type LivenessResponse, type ReadinessResponse } from './health.service.js';
 
-/** Health routes sit outside the /api/v1 prefix (see app.setup.ts). */
 @Controller('health')
 export class HealthController {
   constructor(private readonly healthService: HealthService) {}

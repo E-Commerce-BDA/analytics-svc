@@ -1,14 +1,7 @@
 import { BadRequestException, Injectable, PipeTransform } from '@nestjs/common';
 import type { ZodType } from 'zod';
 
-/**
- * Zod body validation with PII-safe error details.
- *
- * Copied from cms-svc but deliberately does NOT include the rejected value in
- * the error: a beacon carries a page URL, and an invalid one might contain a
- * token in its query string. Field names and a fixed message are enough to fix
- * the request without echoing what the shopper sent.
- */
+// ADR-privacy: never echo rejected input (see Documentation/ARCHITECTURE_DECISIONS.md)
 @Injectable()
 export class ZodValidationPipe implements PipeTransform {
   constructor(private readonly schema: ZodType) {}
