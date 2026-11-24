@@ -39,6 +39,23 @@ export const ANALYTICS_COLLECTIONS: readonly CollectionDefinition[] = [
     ],
   },
   {
+    // anl-003: one fact per checkout, used with cart_events for the funnel.
+    name: 'order_events',
+    indexes: [
+      { key: { createdAt: 1 }, name: 'ttl_order_events', expireAfterSeconds: 60 * 24 * 60 * 60 },
+      { key: { userId: 1, createdAt: -1 }, name: 'order_events_by_user' },
+    ],
+  },
+  {
+    // anl-003: signup cohort only. No display name - the event carries no PII
+    // we need to copy, and funnels need only the id and the timestamp.
+    name: 'user_events',
+    indexes: [
+      { key: { createdAt: 1 }, name: 'ttl_user_events', expireAfterSeconds: 60 * 24 * 60 * 60 },
+      { key: { userId: 1 }, name: 'user_events_by_user' },
+    ],
+  },
+  {
     name: 'processed_events',
     indexes: [
       { key: { eventId: 1 }, name: 'processed_event_id', unique: true },

@@ -6,6 +6,8 @@ describe('analytics Mongo schema', () => {
     expect(ANALYTICS_COLLECTIONS.map((c) => c.name)).toEqual([
       'page_views',
       'cart_events',
+      'order_events',
+      'user_events',
       'processed_events',
     ]);
     const ttl = (name: string) =>
@@ -14,6 +16,8 @@ describe('analytics Mongo schema', () => {
       );
     expect(ttl('page_views')?.expireAfterSeconds).toBe(30 * 24 * 60 * 60);
     expect(ttl('cart_events')?.expireAfterSeconds).toBe(60 * 24 * 60 * 60);
+    expect(ttl('order_events')?.expireAfterSeconds).toBe(60 * 24 * 60 * 60);
+    expect(ttl('user_events')?.expireAfterSeconds).toBe(60 * 24 * 60 * 60);
     expect(ttl('processed_events')).toBeUndefined();
   });
 
@@ -30,8 +34,8 @@ describe('analytics Mongo schema', () => {
     const createIndexes = vi.fn(async () => 'ok');
     const db: IndexDb = { collection: () => ({ createIndexes }) };
     await ensureIndexes(db);
-    expect(createIndexes).toHaveBeenCalledTimes(3);
+    expect(createIndexes).toHaveBeenCalledTimes(5);
     const calls = createIndexes.mock.calls as unknown as Array<[unknown[]]>;
-    expect(calls.map(([specs]) => specs.length)).toEqual([2, 2, 1]);
+    expect(calls.map(([specs]) => specs.length)).toEqual([2, 2, 2, 2, 1]);
   });
 });

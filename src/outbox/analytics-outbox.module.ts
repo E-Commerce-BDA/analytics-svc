@@ -1,6 +1,6 @@
 import { Global, Module } from '@nestjs/common';
-// Narrow entry, not the `/nest` barrel: analytics has no Kafka consumer yet
-// (anl-003 will add one), and the barrel would pull in the consumer surface.
+// Narrow entry, not the `/nest` barrel: analytics consumes but never enqueues
+// SQS tasks, and the barrel would pull in the task surface and its optional peer.
 import { createMongoOutboxModule } from '@ecom/messaging/nest/outbox';
 import { mongoOutboxDb } from '../db/mongo-connection.js';
 import { AnalyticsOutbox } from './analytics-outbox.js';
