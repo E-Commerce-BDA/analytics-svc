@@ -26,6 +26,10 @@ export const envValidationSchema = Joi.object({
     }),
   KAFKA_BROKERS: Joi.string().default('localhost:9092'),
   KAFKA_CONSUMER_ENABLED: Joi.string().valid('true', 'false').default('true'),
+  // anl-004: an active cart with no cart.updated for this long is abandoned.
+  CART_ABANDONED_AFTER_MS: Joi.number().integer().min(60_000).default(30 * 60 * 1000),
+  ABANDONMENT_SWEEP_ENABLED: Joi.string().valid('true', 'false').default('true'),
+  ABANDONMENT_SWEEP_BATCH_SIZE: Joi.number().integer().min(1).max(1000).default(100),
   TRACK_RATE_LIMIT_MAX: Joi.number().integer().min(1).default(60),
   TRACK_RATE_LIMIT_WINDOW_MS: Joi.number().integer().min(1000).default(60_000),
   // Set by the e2e config so the relay never publishes during a test.

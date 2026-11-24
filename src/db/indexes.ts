@@ -56,6 +56,14 @@ export const ANALYTICS_COLLECTIONS: readonly CollectionDefinition[] = [
     ],
   },
   {
+    // anl-004: one marker per cart per idle window. No TTL - it must outlive
+    // the cart facts it dedupes, or a replay could send a second reminder.
+    name: 'abandonment_windows',
+    indexes: [
+      { key: { _id: 1 }, name: 'abandonment_window_id', unique: true },
+    ],
+  },
+  {
     name: 'processed_events',
     indexes: [
       { key: { eventId: 1 }, name: 'processed_event_id', unique: true },

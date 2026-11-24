@@ -8,6 +8,7 @@ describe('analytics Mongo schema', () => {
       'cart_events',
       'order_events',
       'user_events',
+      'abandonment_windows',
       'processed_events',
     ]);
     const ttl = (name: string) =>
@@ -19,6 +20,7 @@ describe('analytics Mongo schema', () => {
     expect(ttl('order_events')?.expireAfterSeconds).toBe(60 * 24 * 60 * 60);
     expect(ttl('user_events')?.expireAfterSeconds).toBe(60 * 24 * 60 * 60);
     expect(ttl('processed_events')).toBeUndefined();
+    expect(ttl('abandonment_windows')).toBeUndefined();
   });
 
   it('deduplicates events forever with a unique eventId index', () => {
@@ -34,8 +36,8 @@ describe('analytics Mongo schema', () => {
     const createIndexes = vi.fn(async () => 'ok');
     const db: IndexDb = { collection: () => ({ createIndexes }) };
     await ensureIndexes(db);
-    expect(createIndexes).toHaveBeenCalledTimes(5);
+    expect(createIndexes).toHaveBeenCalledTimes(6);
     const calls = createIndexes.mock.calls as unknown as Array<[unknown[]]>;
-    expect(calls.map(([specs]) => specs.length)).toEqual([2, 2, 2, 2, 1]);
+    expect(calls.map(([specs]) => specs.length)).toEqual([2, 2, 2, 2, 1, 1]);
   });
 });

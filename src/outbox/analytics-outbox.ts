@@ -1,6 +1,9 @@
 import { randomUUID } from 'node:crypto';
 import { Inject, Injectable } from '@nestjs/common';
-import type { PageViewedPayload } from '@ecom/contracts';
+import type {
+  CartAbandonedPayload,
+  PageViewedPayload,
+} from '@ecom/contracts';
 import type {
   EventTopic,
   MongoSessionLike,
@@ -13,6 +16,12 @@ export interface PageViewWrite {
   topic: 'page.viewed';
   aggregateId: string;
   payload: PageViewedPayload;
+  occurredAt?: Date;
+}
+
+export interface CartAbandonedWrite {
+  aggregateId: string;
+  payload: CartAbandonedPayload;
   occurredAt?: Date;
 }
 
@@ -33,6 +42,21 @@ export class AnalyticsOutbox {
       topic: 'page.viewed',
       eventId: randomUUID(),
       aggregateType: 'page_view',
+      aggregateId: write.aggregateId,
+      occurredAt: write.occurredAt ?? new Date(),
+      payload: write.payload,
+    });
+  }
+
+  /** anl-004: one reminder per idle window, keyed by the chosen cart identity. */
+  recordCartAbandoned(
+    session: MongoSessionLike,
+    write: CartAbandonedWrite,
+  ): Promise<string> {
+    return this.write(session, {
+      topic: 'cart.abandoned',
+      eventId: randomUUID(),
+      aggregateType: 'cart_abandonment',
       aggregateId: write.aggregateId,
       occurredAt: write.occurredAt ?? new Date(),
       payload: write.payload,
