@@ -95,6 +95,25 @@ describe('AbandonmentWriter', () => {
     );
   });
 
+  it('emits a PII-minimal payload with no email address', async () => {
+    const s = setup();
+    expect(await s.writer.publish(idleCart, NOW)).toBe(true);
+    const payload = s.outbox.recordCartAbandoned.mock.calls[0]![1]
+      .payload as Record<string, unknown>;
+    expect(payload).not.toHaveProperty('email');
+    expect(Object.keys(payload).sort()).toEqual(
+      [
+        'abandonedAt',
+        'cartId',
+        'itemsCount',
+        'lastActivityAt',
+        'sessionId',
+        'subtotal',
+        'userId',
+      ].sort(),
+    );
+  });
+
   it('treats a duplicate window as a no-op and never writes a second event', async () => {
     const s = setup();
     s.markerInsert.mockRejectedValueOnce({ code: 11000 });

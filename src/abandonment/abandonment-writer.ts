@@ -95,6 +95,8 @@ export class AbandonmentWriter {
         throw error;
       }
 
+      // PII stays off the wire: notify-svc resolves the reminder address through
+      // auth-svc's internal lookup (au-005), never from this event.
       const payload: CartAbandonedPayload = {
         cartId: cart.cartId,
         userId: cart.userId,
