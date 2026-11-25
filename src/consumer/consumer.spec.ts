@@ -15,8 +15,10 @@ const NOW = '2026-11-24T10:00:00.000Z';
 const envelope = (type: string, payload: Record<string, unknown>) => ({
   id: EVENT_ID,
   type,
+  version: 1,
   producer: 'test',
   timestamp: NOW,
+  idempotencyKey: EVENT_ID,
   payload,
 });
 
@@ -148,6 +150,38 @@ describe('AnalyticsEventHandler', () => {
     const s = setup();
     const outcome = await s.handler.handle(envelope('cms.updated', {}));
     expect(outcome).toEqual(expect.objectContaining({ kind: 'ignored' }));
+    expect(s.record).not.toHaveBeenCalled();
+  });
+
+  // 2.0.0 made the canonical fields required and dropped the aliases. A stored
+  // 1.x envelope must be rejected here, not silently normalised, so the backfill
+  // is the only place a legacy shape is ever converted.
+  const legacyShapes: ReadonlyArray<
+    readonly [string, (raw: Record<string, unknown>) => Record<string, unknown>]
+  > = [
+    ['a topic alias', (raw) => ({ ...raw, topic: 'page.viewed' })],
+    ['an eventType alias', (raw) => ({ ...raw, eventType: 'page.viewed' })],
+    [
+      'a missing version',
+      (raw) => {
+        delete raw.version;
+        return raw;
+      },
+    ],
+    [
+      'a missing idempotencyKey',
+      (raw) => {
+        delete raw.idempotencyKey;
+        return raw;
+      },
+    ],
+  ];
+
+  it.each(legacyShapes)('rejects %s at the envelope stage', async (_label, mutate) => {
+    const s = setup();
+    const raw = mutate({ ...envelope('page.viewed', payloads['page.viewed']) });
+    const outcome = await s.handler.handle(raw);
+    expect(outcome).toEqual(expect.objectContaining({ kind: 'invalid', stage: 'envelope' }));
     expect(s.record).not.toHaveBeenCalled();
   });
 });
