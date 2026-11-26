@@ -64,7 +64,14 @@ export class AnalyticsFactStore {
     } catch (error) {
       // 11000 is the duplicate-key code; any other error must surface so the
       // record is retried instead of being silently treated as a duplicate.
-      if ((error as { code?: number }).code === 11000) return false;
+      // A failed insert leaves the Mongo transaction aborted, so it must be
+      // closed here: committing it would fail with a *transient* "transaction
+      // aborted" error and the driver would retry the poisoned transaction for
+      // two minutes per attempt, stalling the partition behind one redelivery.
+      if ((error as { code?: number }).code === 11000) {
+        await session.abortTransaction();
+        return false;
+      }
       throw error;
     }
   }

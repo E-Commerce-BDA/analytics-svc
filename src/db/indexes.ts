@@ -60,7 +60,9 @@ export const ANALYTICS_COLLECTIONS: readonly CollectionDefinition[] = [
     // the cart facts it dedupes, or a replay could send a second reminder.
     name: 'abandonment_windows',
     indexes: [
-      { key: { _id: 1 }, name: 'abandonment_window_id', unique: true },
+      // `_id` is unique by definition; Mongo rejects `unique: true` on an _id
+      // index with code 197, which used to stop the service before /health.
+      { key: { _id: 1 }, name: 'abandonment_window_id' },
     ],
   },
   {
@@ -81,4 +83,49 @@ export async function ensureIndexes(db: IndexDb): Promise<void> {
   for (const collection of ANALYTICS_COLLECTIONS) {
     await db.collection(collection.name).createIndexes(collection.indexes);
   }
+}
+
+export interface ExistingIndex {
+  readonly name: string;
+  readonly key: Record<string, 1 | -1>;
+  readonly unique?: boolean;
+}
+
+export interface RepairableIndexDb extends IndexDb {
+  collection(name: string): {
+    createIndexes(specs: readonly IndexDefinition[]): Promise<unknown>;
+    indexes(): Promise<readonly ExistingIndex[]>;
+    dropIndex(name: string): Promise<unknown>;
+  };
+}
+
+export function isInvalidUniqueIdIndex(index: ExistingIndex): boolean {
+  const keys = Object.keys(index.key);
+  return (
+    index.unique === true &&
+    keys.length === 1 &&
+    keys[0] === '_id' &&
+    index.name !== '_id_'
+  );
+}
+
+/**
+ * Drops a `unique` index on `_id` if an older build managed to create one,
+ * then applies the current declarations. Mongo rejects such an index on create
+ * (code 197), but an already-stored one would keep `createIndexes` failing at
+ * boot, so the repair is part of the same idempotent migration as the fix.
+ */
+export async function repairIndexes(db: RepairableIndexDb): Promise<string[]> {
+  const dropped: string[] = [];
+  for (const collection of ANALYTICS_COLLECTIONS) {
+    const target = db.collection(collection.name);
+    for (const existing of await target.indexes()) {
+      if (isInvalidUniqueIdIndex(existing)) {
+        await target.dropIndex(existing.name);
+        dropped.push(`${collection.name}.${existing.name}`);
+      }
+    }
+    await target.createIndexes(collection.indexes);
+  }
+  return dropped;
 }

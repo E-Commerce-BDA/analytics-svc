@@ -61,12 +61,13 @@ describe('AnalyticsFactStore (Mongo)', () => {
           ? { insertOne: processedInsert }
           : { insertOne: factInsert },
     };
-    const tx = { run: vi.fn(async (fn: (s: unknown) => Promise<boolean>) => fn({ id: 's' })) };
+    const session = { id: 's', abortTransaction: vi.fn(async () => undefined) };
+    const tx = { run: vi.fn(async (fn: (s: unknown) => Promise<boolean>) => fn(session)) };
     const store = new AnalyticsFactStore(
       tx as never,
       { db } as unknown as Connection,
     );
-    return { store, tx, processedInsert, factInsert, db };
+    return { store, tx, session, processedInsert, factInsert, db };
   };
 
   it('claims the event and writes the fact in one transaction', async () => {
@@ -75,18 +76,20 @@ describe('AnalyticsFactStore (Mongo)', () => {
     expect(s.tx.run).toHaveBeenCalledTimes(1);
     expect(s.processedInsert).toHaveBeenCalledWith(
       expect.objectContaining({ _id: EVENT_ID, eventId: EVENT_ID, topic: 'cart.updated' }),
-      expect.objectContaining({ session: { id: 's' } }),
+      expect.objectContaining({ session: expect.objectContaining({ id: 's' }) }),
     );
     expect(s.factInsert).toHaveBeenCalledWith(
       { cartId: 'c' },
-      expect.objectContaining({ session: { id: 's' } }),
+      expect.objectContaining({ session: expect.objectContaining({ id: 's' }) }),
     );
+    expect(s.session.abortTransaction).not.toHaveBeenCalled();
   });
 
-  it('treats a duplicate key as a no-op and skips the fact insert', async () => {
+  it('aborts the poisoned transaction on a duplicate key so it is not retried', async () => {
     const s = setup();
     s.processedInsert.mockRejectedValueOnce({ code: 11000 });
     expect(await s.store.record(EVENT_ID, 'page.viewed', 'page_views', {})).toBe(false);
+    expect(s.session.abortTransaction).toHaveBeenCalledTimes(1);
     expect(s.factInsert).not.toHaveBeenCalled();
   });
 
@@ -94,6 +97,7 @@ describe('AnalyticsFactStore (Mongo)', () => {
     const s = setup();
     s.processedInsert.mockRejectedValueOnce(new Error('primary down'));
     await expect(s.store.record(EVENT_ID, 'page.viewed', 'page_views', {})).rejects.toThrow('primary down');
+    expect(s.session.abortTransaction).not.toHaveBeenCalled();
   });
 });
 

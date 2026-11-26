@@ -18,6 +18,26 @@ pnpm lint
 pnpm build
 ```
 
+## Index repair
+
+An older build declared `unique: true` on an `_id` index. Mongo rejects that
+specification with code 197, so the service could not boot far enough to serve
+`/health`. The declaration is corrected in `src/db/indexes.ts`; to clean a
+database that already holds the bad index, run the idempotent repair after
+`pnpm build`:
+
+```bash
+pnpm build
+node --env-file=.env dist/db/indexes-repair.cli.js --dry-run   # inspect first
+pnpm db:repair-indexes                                        # then apply
+```
+
+When there is no local `.env`, export `MONGODB_URI` and call the compiled CLI
+directly instead.
+
+It drops only a non-`_id_`-named, `unique` index on `_id`, then re-applies the
+current declarations. A clean database reports zero drops.
+
 ## Contracts 2.0.0 cutover: outbox backfill
 
 `@ecom/contracts` 2.0.0 requires `type`, `version` and `idempotencyKey` in every
